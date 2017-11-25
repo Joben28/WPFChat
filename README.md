@@ -1,2 +1,2 @@
 # WPFChat
-A WPF chat application
+A WPF chat application using TCP sockets.
