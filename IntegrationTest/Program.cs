@@ -23,7 +23,7 @@ namespace IntegrationTest
 
             while (!server.IsRunning) ;
 
-            client = new SimpleClient("69.207.150.109", 8000);
+            client = new SimpleClient("0.0.0.0", 8000);
 
             Task<bool> connection = Connect();
             connection.Wait();
