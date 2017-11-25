@@ -3,7 +3,7 @@ A WPF chat application using TCP sockets.
 
 Theme in the application is MahApps: http://mahapps.com/
 </br>
-Icons in the application is from: https://www.iconfinder.com
+Icons in the application are from: https://www.iconfinder.com
 
 # Images
 ![Server Application](https://imgur.com/1L7IrMW.png)
