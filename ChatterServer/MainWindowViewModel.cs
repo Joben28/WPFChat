@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -15,34 +16,34 @@ using System.Windows.Media;
 
 namespace ChatterServer
 {
-    public class MainWindowViewModel : ObservableObject
+    public class MainWindowViewModel : BaseViewModel
     {
-        private string externalAddress;
+        private string _externalAddress;
         public string ExternalAddress
         {
-            get { return externalAddress; }
-            set { OnPropertyChanged(ref externalAddress, value); }
+            get { return _externalAddress; }
+            set { OnPropertyChanged(ref _externalAddress, value); }
         }
 
-        private string port = "8000";
+        private string _port = "8000";
         public string Port
         {
-            get { return port; }
-            set { OnPropertyChanged(ref port, value); }
+            get { return _port; }
+            set { OnPropertyChanged(ref _port, value); }
         }
 
-        private string status = "Idle";
+        private string _status = "Idle";
         public string Status
         {
-            get { return status; }
-            set { OnPropertyChanged(ref status, value); }
+            get { return _status; }
+            set { OnPropertyChanged(ref _status, value); }
         }
 
-        private int clientsConnected;
+        private int _clientsConnected;
         public int ClientsConnected
         {
-            get { return clientsConnected; }
-            set { OnPropertyChanged(ref clientsConnected, value); }
+            get { return _clientsConnected; }
+            set { OnPropertyChanged(ref _clientsConnected, value); }
         }
 
         public ObservableCollection<string> Outputs { get; set; }
@@ -51,34 +52,31 @@ namespace ChatterServer
         public ICommand RunCommand { get; set; }
         public ICommand StopCommand { get; set; }
 
-        private SimpleServer server;
-        private bool isRunning;
+        private SimpleServer _server;
+        private bool _isRunning;
 
-        private Task runTask;
-        private Task updateTask;
-        private Task listenTask;
+        private Task _updateTask;
+        private Task _listenTask;
 
         public MainWindowViewModel()
         {
             Outputs = new ObservableCollection<string>();
 
-            RunCommand = new RelayCommand(Run);
-            StopCommand = new RelayCommand(Stop);
+            RunCommand = new AsyncCommand(Run);
+            StopCommand = new AsyncCommand(Stop);
         }
 
-        private void Run()
+        private async Task Run()
         {
-            runTask = Task.Factory.StartNew(() =>
-            {
-                Status = "Connecting...";
-                SetupServer();
-                listenTask = Task.Run(() => server.Start());
-                updateTask = Task.Run(() => Update());
-                isRunning = true;
-            });
+            Status = "Connecting...";
+            await SetupServer();
+            _server.Open();
+            _listenTask = Task.Run(() => _server.Start());
+            _updateTask = Task.Run(() => Update());
+            _isRunning = true;
         }
 
-        private void SetupServer()
+        private async Task SetupServer()
         {
             Status = "Validating socket...";
             int socketPort = 0;
@@ -91,43 +89,45 @@ namespace ChatterServer
             }
 
             Status = "Obtaining IP...";
-            GetExternalIp();
+            await Task.Run(() => GetExternalIp());
             Status = "Setting up server...";
-            server = new SimpleServer(IPAddress.Any, socketPort);
+            _server = new SimpleServer(IPAddress.Any, socketPort);
 
             Status = "Setting up events...";
-            server.OnConnectionAccepted += Server_OnConnectionAccepted;
-            server.OnConnectionRemoved += Server_OnConnectionRemoved;
-            server.OnPacketSent += Server_OnPacketSent;
-            server.OnPersonalPacketSent += Server_OnPersonalPacketSent;
-            server.OnPersonalPacketReceived += Server_OnPersonalPacketReceived;
-            server.OnPacketReceived += Server_OnPacketReceived;
+            _server.OnConnectionAccepted += Server_OnConnectionAccepted;
+            _server.OnConnectionRemoved += Server_OnConnectionRemoved;
+            _server.OnPacketSent += Server_OnPacketSent;
+            _server.OnPersonalPacketSent += Server_OnPersonalPacketSent;
+            _server.OnPersonalPacketReceived += Server_OnPersonalPacketReceived;
+            _server.OnPacketReceived += Server_OnPacketReceived;
         }
 
         private void Update()
         {
-            while(isRunning)
+            while(_isRunning)
             {
                 Thread.Sleep(5);
-                if (!server.IsRunning)
+                if (!_server.IsRunning)
                 {
-                    Stop();
+                    Task.Run(() => Stop());
                     return;
                 }
 
-                ClientsConnected = server.Connections.Count;
+                ClientsConnected = _server.Connections.Count;
                 Status = "Running";
             }
         }
 
-        private void Stop()
+        private async Task Stop()
         {
             ExternalAddress = string.Empty;
-            isRunning = false;
+            _isRunning = false;
             ClientsConnected = 0;
-            Thread.Sleep(1000);
+            _server.Close();
+
+            await _listenTask;
+            await _updateTask;
             Status = "Stopped";
-            server.Stop();
         }
 
 
@@ -181,9 +181,9 @@ namespace ChatterServer
 
                 ucp.Users = Usernames.Values.ToArray();
 
-                Task.Run(() => server.SendObjectToClients(ucp)).Wait();
+                Task.Run(() => _server.SendObjectToClients(ucp)).Wait();
                 Thread.Sleep(500);
-                Task.Run(() => server.SendObjectToClients(notification)).Wait();
+                Task.Run(() => _server.SendObjectToClients(notification)).Wait();
             }
             WriteOutput("Personal Packet Received");
         }
@@ -219,10 +219,10 @@ namespace ChatterServer
 
             userPacket.Users = Usernames.Values.ToArray();
 
-            if(server.Connections.Count != 0)
+            if(_server.Connections.Count != 0)
             {
-                Task.Run(() => server.SendObjectToClients(userPacket)).Wait();
-                Task.Run(() => server.SendObjectToClients(notification)).Wait();
+                Task.Run(() => _server.SendObjectToClients(userPacket)).Wait();
+                Task.Run(() => _server.SendObjectToClients(notification)).Wait();
             }
             WriteOutput("Client Disconnected: " + e.Sender.Socket.RemoteEndPoint.ToString());
         }

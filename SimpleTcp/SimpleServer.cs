@@ -25,7 +25,7 @@ namespace SimpleTcp
         public bool IsRunning { get; private set; }
         public List<SimpleClient> Connections { get; private set; }
 
-        private Task receivingTask;
+        private Task _receivingTask;
 
         public event PacketEventHandler OnConnectionAccepted;
         public event PacketEventHandler OnConnectionRemoved;
@@ -45,26 +45,30 @@ namespace SimpleTcp
             Socket = new Socket(AddressFamily.InterNetwork,
                            SocketType.Stream, ProtocolType.Tcp);
 
+            Socket.ReceiveTimeout = 5000;
             Connections = new List<SimpleClient>();
+        }
+
+        public bool Open()
+        {
+            Socket.Bind(EndPoint);
+            Socket.Listen(10);
+            return true;
         }
 
         public async Task<bool> Start()
         {
-            Socket.Bind(EndPoint);
-            Socket.Listen(10);
-
-            receivingTask = Task.Run(() => MonitorStreams());
+            _receivingTask = Task.Run(() => MonitorStreams());
             IsRunning = true;
             await Listen();
-            Console.WriteLine("LEND");
+            await _receivingTask;
+            Socket.Close();
             return true;
         }
 
-        public bool Stop()
+        public bool Close()
         {
             IsRunning = false;
-            Socket.Blocking = false;
-            Socket.Close();
             Connections.Clear();
             return true;
         }
@@ -73,16 +77,20 @@ namespace SimpleTcp
         {
             while (IsRunning)
             {
-                var newConnection = Socket.Accept();
-                var client = new SimpleClient();
-                var newGuid = await client.CreateGuid(newConnection);
-                await client.SendMessage(newGuid);
-                Connections.Add(client);
-                var e = BuildEvent(client, null, String.Empty);
-                OnConnectionAccepted?.Invoke(this, e);
+                if (Socket.Poll(100000, SelectMode.SelectRead))
+                {
+                    var newConnection = Socket.Accept();
+                    if (newConnection != null)
+                    {
+                        var client = new SimpleClient();
+                        var newGuid = await client.CreateGuid(newConnection);
+                        await client.SendMessage(newGuid);
+                        Connections.Add(client);
+                        var e = BuildEvent(client, null, String.Empty);
+                        OnConnectionAccepted?.Invoke(this, e);
+                    }
+                }
             }
-
-            receivingTask.Wait();
             return true;
         }
 

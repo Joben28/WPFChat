@@ -15,50 +15,50 @@ namespace ChatterClient
 {
     public class MainWindowViewModel : BaseViewModel
     {
-        private string username;
+        private string _username;
         public string Username
         {
-            get { return username; }
-            set { OnPropertyChanged(ref username, value); }
+            get { return _username; }
+            set { OnPropertyChanged(ref _username, value); }
         }
 
-        private string address;
+        private string _address;
         public string Address
         {
-            get { return address; }
-            set { OnPropertyChanged(ref address, value); }
+            get { return _address; }
+            set { OnPropertyChanged(ref _address, value); }
         }
 
-        private string port = "8000";
+        private string _port = "8000";
         public string Port
         {
-            get { return port; }
-            set { OnPropertyChanged(ref port, value); }
+            get { return _port; }
+            set { OnPropertyChanged(ref _port, value); }
         }
 
-        private string message;
+        private string _message;
         public string Message
         {
-            get { return message; }
-            set { OnPropertyChanged(ref message, value); }
+            get { return _message; }
+            set { OnPropertyChanged(ref _message, value); }
         }
 
-        private string colorCode;
+        private string _colorCode;
         public string ColorCode
         {
-            get { return colorCode; }
-            set { OnPropertyChanged(ref colorCode, value); }
+            get { return _colorCode; }
+            set { OnPropertyChanged(ref _colorCode, value); }
         }
 
         public ICommand ConnectCommand { get; set; }
         public ICommand DisconnectCommand { get; set; }
         public ICommand SendCommand { get; set; }
 
-        private ChatroomViewModel chatRoom;
+        private ChatroomViewModel _chatRoom;
         public ChatroomViewModel ChatRoom
         {
-            get { return chatRoom; }
-            set { OnPropertyChanged(ref chatRoom, value); }
+            get { return _chatRoom; }
+            set { OnPropertyChanged(ref _chatRoom, value); }
         }
 
         public MainWindowViewModel()

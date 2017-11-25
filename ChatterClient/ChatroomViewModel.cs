@@ -17,29 +17,29 @@ namespace ChatterClient
         public ObservableCollection<ChatPacket> Messages { get; set; }
         public ObservableCollection<string> Users { get; set; }
 
-        private string status;
+        private string _status;
         public string Status
         {
-            get { return status; }
-            set { OnPropertyChanged(ref status, value); }
+            get { return _status; }
+            set { OnPropertyChanged(ref _status, value); }
         }
 
-        private bool isRunning = false;
+        private bool _isRunning = false;
         public bool IsRunning
         {
-            get { return isRunning; }
-            set { OnPropertyChanged(ref isRunning, value); }
+            get { return _isRunning; }
+            set { OnPropertyChanged(ref _isRunning, value); }
         }
 
-        private SimpleClient client;
+        private SimpleClient _client;
 
-        private Task<bool> listenTask;
-        private Task updateTask;
-        private Task connectionTask;
+        private Task<bool> _listenTask;
+        private Task _updateTask;
+        private Task _connectionTask;
 
-        private DateTime pingSent;
-        private DateTime pingLastSent;
-        private bool pinged = false;
+        private DateTime _pingSent;
+        private DateTime _pingLastSent;
+        private bool _pinged = false;
 
         public ChatroomViewModel()
         {
@@ -60,13 +60,13 @@ namespace ChatterClient
 
         private async Task InitializeConnection(PersonalPacket connectionPacket)
         {
-            pinged = false;
+            _pinged = false;
 
             if (IsRunning)
             {
-                updateTask = Task.Run(() => Update());
-                await client.SendObject(connectionPacket);
-                connectionTask = Task.Run(() => MonitorConnection());
+                _updateTask = Task.Run(() => Update());
+                await _client.SendObject(connectionPacket);
+                _connectionTask = Task.Run(() => MonitorConnection());
                 Status = "Connected";
             }
             else
@@ -78,20 +78,20 @@ namespace ChatterClient
 
         private async Task<PersonalPacket> GetNewConnectionPacket(string username)
         {
-            listenTask = Task.Run(() => client.Connect());
+            _listenTask = Task.Run(() => _client.Connect());
 
-            IsRunning = await listenTask;
+            IsRunning = await _listenTask;
 
             var notifyServer = new UserConnectionPacket
             {
                 Username = username,
                 IsJoining = true,
-                UserGuid = client.ClientId.ToString()
+                UserGuid = _client.ClientId.ToString()
             };
 
             var personalPacket = new PersonalPacket
             {
-                GuidId = client.ClientId.ToString(),
+                GuidId = _client.ClientId.ToString(),
                 Package = notifyServer
             };
 
@@ -100,7 +100,7 @@ namespace ChatterClient
 
         private bool SetupClient(string username, string address, int port)
         {
-            client = new SimpleClient(address, port);
+            _client = new SimpleClient(address, port);
             return true;
         }
 
@@ -109,10 +109,10 @@ namespace ChatterClient
             if(IsRunning)
             {
                 IsRunning = false;
-                await connectionTask;
-                await updateTask;
+                await _connectionTask;
+                await _updateTask;
 
-                client.Disconnect();
+                _client.Disconnect();
             }
 
             Status = "Disconnected";
@@ -137,7 +137,7 @@ namespace ChatterClient
                 UserColor = colorCode
             };
 
-            await client.SendObject(cap);
+            await _client.SendObject(cap);
         }
 
         private async Task Update()
@@ -154,36 +154,36 @@ namespace ChatterClient
 
         private async Task MonitorConnection()
         {
-            pingSent = DateTime.Now;
-            pingLastSent = DateTime.Now;
+            _pingSent = DateTime.Now;
+            _pingLastSent = DateTime.Now;
 
             while (IsRunning)
             {
                 Thread.Sleep(1);
-                var timePassed = (pingSent.TimeOfDay - pingLastSent.TimeOfDay);
+                var timePassed = (_pingSent.TimeOfDay - _pingLastSent.TimeOfDay);
                 if (timePassed > TimeSpan.FromSeconds(5))
                 {
-                    if (!pinged)
+                    if (!_pinged)
                     {
-                        var result = await client.PingConnection();
-                        pinged = true;
+                        var result = await _client.PingConnection();
+                        _pinged = true;
 
                         Thread.Sleep(5000);
 
-                        if (pinged)
+                        if (_pinged)
                             Task.Run(() => Disconnect());
                     }
                 }
                 else
                 {
-                    pingSent = DateTime.Now;
+                    _pingSent = DateTime.Now;
                 }
             }
         }
 
         private async Task<bool> MonitorData()
         {
-            var newObject = await client.RecieveObject();
+            var newObject = await _client.RecieveObject();
 
             App.Current.Dispatcher.Invoke(delegate
             {
@@ -213,9 +213,9 @@ namespace ChatterClient
 
                 if (packet is PingPacket pingP)
                 {
-                    pingLastSent = DateTime.Now;
-                    pingSent = pingLastSent;
-                    pinged = false;
+                    _pingLastSent = DateTime.Now;
+                    _pingSent = _pingLastSent;
+                    _pinged = false;
                 }
 
                 return true;

@@ -68,7 +68,6 @@
     <Compile Include="ChatroomViewModel.cs" />
     <Compile Include="Converters\InverseBooleanConverter.cs" />
     <Compile Include="MainWindowViewModel.cs" />
-    <Compile Include="RelayCommand.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
