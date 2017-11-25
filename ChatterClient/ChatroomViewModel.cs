@@ -12,7 +12,7 @@ using System.Windows.Input;
 
 namespace ChatterClient
 {
-    public class Chatroom : ObservableObject
+    public class ChatroomViewModel : BaseViewModel
     {
         public ObservableCollection<ChatPacket> Messages { get; set; }
         public ObservableCollection<string> Users { get; set; }
@@ -42,7 +42,7 @@ namespace ChatterClient
         private DateTime pingLastSent;
         private bool pinged = false;
 
-        public Chatroom()
+        public ChatroomViewModel()
         {
             Messages = new ObservableCollection<ChatPacket>();
             Users = new ObservableCollection<string>();

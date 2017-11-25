@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ChatterClient
 {
-    public class ObservableObject : INotifyPropertyChanged
+    public class BaseViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 

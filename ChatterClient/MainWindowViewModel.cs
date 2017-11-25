@@ -13,7 +13,7 @@ using System.Windows.Threading;
 
 namespace ChatterClient
 {
-    public class MainWindowViewModel : ObservableObject
+    public class MainWindowViewModel : BaseViewModel
     {
         private string username;
         public string Username
@@ -54,8 +54,8 @@ namespace ChatterClient
         public ICommand DisconnectCommand { get; set; }
         public ICommand SendCommand { get; set; }
 
-        private Chatroom chatRoom;
-        public Chatroom ChatRoom
+        private ChatroomViewModel chatRoom;
+        public ChatroomViewModel ChatRoom
         {
             get { return chatRoom; }
             set { OnPropertyChanged(ref chatRoom, value); }
@@ -63,7 +63,7 @@ namespace ChatterClient
 
         public MainWindowViewModel()
         {
-            ChatRoom = new Chatroom();
+            ChatRoom = new ChatroomViewModel();
 
             ConnectCommand = new RelayCommand(Connect, CanConnect);
             DisconnectCommand = new RelayCommand(Disconnect, CanDisconnect);
@@ -72,7 +72,7 @@ namespace ChatterClient
 
         private void Connect()
         {
-            ChatRoom = new Chatroom();
+            ChatRoom = new ChatroomViewModel();
             int socketPort = 0;
             var validPort = int.TryParse(Port, out socketPort);
 

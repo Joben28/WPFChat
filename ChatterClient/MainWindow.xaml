@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatterClient"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:converters="clr-namespace:ChatterClient.Converters"
         xmlns:controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
         Title="Chatter Client" Height="450" Width="625"  Background="WhiteSmoke" Icon="messenger-icon.ico">
@@ -12,8 +13,8 @@
         <local:MainWindowViewModel/>
     </Window.DataContext>
     <Window.Resources>
-        <local:BooleanToVisibilityConverter x:Key="VisibilityConverter"/>
-        <local:InverseBooleanConverter x:Key="InverseConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="VisibilityConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseConverter"/>
     </Window.Resources>
     <Grid Margin="2">
         <Grid.ColumnDefinitions>

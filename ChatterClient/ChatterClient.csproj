@@ -63,10 +63,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="BooleanToVisibilityConverter.cs" />
-    <Compile Include="Chatroom.cs" />
-    <Compile Include="ConnectedUser.cs" />
-    <Compile Include="InverseBooleanConverter.cs" />
+    <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
+    <Compile Include="ChatroomViewModel.cs" />
+    <Compile Include="Converters\InverseBooleanConverter.cs" />
     <Compile Include="MainWindowViewModel.cs" />
     <Compile Include="RelayCommand.cs" />
     <Page Include="MainWindow.xaml">
@@ -83,7 +82,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ObservableObject.cs" />
+    <Compile Include="BaseViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
