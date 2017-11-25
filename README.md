@@ -1,6 +1,9 @@
 # WPFChat
 A WPF chat application using TCP sockets.
 
+Theme in the application is MahApps: http://mahapps.com/
+Icons in the application is from: https://www.iconfinder.com
+
 # Images
 ![Server Application](https://imgur.com/1L7IrMW.png)
 </br>
