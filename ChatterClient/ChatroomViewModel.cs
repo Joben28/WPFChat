@@ -48,24 +48,19 @@ namespace ChatterClient
             Users = new ObservableCollection<string>();
         }
 
-        public void Connect(string username, string address, int port)
+        public async Task Connect(string username, string address, int port)
         {
-            Messages.Clear();
-            Users.Clear();
             IsRunning = true;
             Status = "Connecting...";
 
-            runTask = Task.Factory.StartNew(() =>
+            if (SetupClient(username, address, port))
             {
-                if (SetupClient(username, address, port))
-                {
-                    var packet = GetNewConnectionPacket(username);
-                    InitializeConnection(packet);
-                }
-            });
+                var packet = GetNewConnectionPacket(username);
+                await InitializeConnection(packet);
+            }
         }
 
-        private void InitializeConnection(PersonalPacket connectionPacket)
+        private async Task InitializeConnection(PersonalPacket connectionPacket)
         {
             updateTask = Task.Run(() => Update());
             pinged = false;
@@ -74,14 +69,14 @@ namespace ChatterClient
 
             if (listenTask.IsCompleted)
             {
-                Task.Run(() => client.SendObject(connectionPacket));
+                await client.SendObject(connectionPacket);
                 connectionTask = Task.Run(() => MonitorConnection());
                 Status = "Connected";
             }
             else
             {
                 Status = "Connection failed";
-                Disconnect();
+                await Disconnect();
             }
         }
 
@@ -114,12 +109,11 @@ namespace ChatterClient
             return true;
         }
 
-        public void Disconnect()
+        public async Task Disconnect()
         {
             IsRunning = false;
-            listenTask.Wait();
-            updateTask.Wait();
-            runTask.Wait();
+            await listenTask;
+            await updateTask;
 
             Status = "Disconnected";
             client.Disconnect();
@@ -135,7 +129,7 @@ namespace ChatterClient
             });
         }
 
-        public void Send(string username, string message, string colorCode)
+        public async Task Send(string username, string message, string colorCode)
         {
             ChatPacket cap = new ChatPacket
             {
@@ -144,7 +138,7 @@ namespace ChatterClient
                 UserColor = colorCode
             };
 
-            Task.Run(() => client.SendObject(cap));
+            await client.SendObject(cap);
         }
 
         private async Task Update()
@@ -177,7 +171,7 @@ namespace ChatterClient
                         pinged = true;
                         Thread.Sleep(5000);
                         if (pinged)
-                            Disconnect();
+                            await Disconnect();
                     }
                 }
                 else
@@ -230,6 +224,12 @@ namespace ChatterClient
             }
 
             return false;
+        }
+
+        public void Clear()
+        {
+            Messages.Clear();
+            Users.Clear();
         }
     }
 }

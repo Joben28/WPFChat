@@ -65,12 +65,12 @@ namespace ChatterClient
         {
             ChatRoom = new ChatroomViewModel();
 
-            ConnectCommand = new RelayCommand(Connect, CanConnect);
-            DisconnectCommand = new RelayCommand(Disconnect, CanDisconnect);
-            SendCommand = new RelayCommand(Send, CanSend);
+            ConnectCommand = new AsyncCommand(Connect, CanConnect);
+            DisconnectCommand = new AsyncCommand(Disconnect, CanDisconnect);
+            SendCommand = new AsyncCommand(Send, CanSend);
         }
 
-        private void Connect()
+        private async Task Connect()
         {
             ChatRoom = new ChatroomViewModel();
             int socketPort = 0;
@@ -94,23 +94,24 @@ namespace ChatterClient
                 return;
             }
 
-            ChatRoom.Connect(Username, Address, socketPort);
+            ChatRoom.Clear();
+            await Task.Run(() => ChatRoom.Connect(Username, Address, socketPort));
         }
 
-        private void Disconnect()
+        private async Task Disconnect()
         {
             if (ChatRoom == null)
                 DisplayError("You are not connected to a server.");
 
-            Task.Run(() => ChatRoom.Disconnect());
+            await ChatRoom.Disconnect();
         }
 
-        private void Send()
+        private async Task Send()
         {
             if (ChatRoom == null)
                 DisplayError("You are not connected to a server.");
 
-            ChatRoom.Send(Username, Message, ColorCode);
+            await ChatRoom.Send(Username, Message, ColorCode);
             Message = string.Empty;
         }
 
