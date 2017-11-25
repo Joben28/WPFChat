@@ -115,36 +115,11 @@ namespace ChatterClient
             Message = string.Empty;
         }
 
-        private bool CanConnect()
-        {
-            if (ChatRoom.IsRunning)
-                return false;
+        private bool CanConnect() => !ChatRoom.IsRunning;
+        private bool CanDisconnect() => ChatRoom.IsRunning;
+        private bool CanSend() => !String.IsNullOrWhiteSpace(Message) && ChatRoom.IsRunning;
 
-            return true;
-        }
-
-        private bool CanDisconnect()
-        {
-            if (ChatRoom.IsRunning)
-                return true;
-
-            return false;
-        }
-
-        private bool CanSend()
-        {
-            if (String.IsNullOrWhiteSpace(Message))
-                return false;
-
-            if (chatRoom.IsRunning)
-                return true;
-
-            return false;
-        }
-
-        private void DisplayError(string message)
-        {
+        private void DisplayError(string message) => 
             MessageBox.Show(message, "Woah there!", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
     }
 }

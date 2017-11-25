@@ -33,7 +33,6 @@ namespace ChatterClient
 
         private SimpleClient client;
 
-        private Task runTask;
         private Task<bool> listenTask;
         private Task updateTask;
         private Task connectionTask;
@@ -50,25 +49,22 @@ namespace ChatterClient
 
         public async Task Connect(string username, string address, int port)
         {
-            IsRunning = true;
             Status = "Connecting...";
 
             if (SetupClient(username, address, port))
             {
-                var packet = GetNewConnectionPacket(username);
+                var packet = await GetNewConnectionPacket(username);
                 await InitializeConnection(packet);
             }
         }
 
         private async Task InitializeConnection(PersonalPacket connectionPacket)
         {
-            updateTask = Task.Run(() => Update());
             pinged = false;
 
-            Thread.Sleep(2000);
-
-            if (listenTask.IsCompleted)
+            if (IsRunning)
             {
+                updateTask = Task.Run(() => Update());
                 await client.SendObject(connectionPacket);
                 connectionTask = Task.Run(() => MonitorConnection());
                 Status = "Connected";
@@ -80,13 +76,12 @@ namespace ChatterClient
             }
         }
 
-        private PersonalPacket GetNewConnectionPacket(string username)
+        private async Task<PersonalPacket> GetNewConnectionPacket(string username)
         {
             listenTask = Task.Run(() => client.Connect());
 
-            while (!client.IsGuidAssigned) ;
+            IsRunning = await listenTask;
 
-            Console.WriteLine(client.ClientId);
             var notifyServer = new UserConnectionPacket
             {
                 Username = username,
@@ -111,12 +106,16 @@ namespace ChatterClient
 
         public async Task Disconnect()
         {
-            IsRunning = false;
-            await listenTask;
-            await updateTask;
+            if(IsRunning)
+            {
+                IsRunning = false;
+                await connectionTask;
+                await updateTask;
+
+                client.Disconnect();
+            }
 
             Status = "Disconnected";
-            client.Disconnect();
 
             App.Current.Dispatcher.Invoke(delegate
             {
@@ -167,11 +166,12 @@ namespace ChatterClient
                     if (!pinged)
                     {
                         var result = await client.PingConnection();
-                        Console.WriteLine("Ping sent");
                         pinged = true;
+
                         Thread.Sleep(5000);
+
                         if (pinged)
-                            await Disconnect();
+                            Task.Run(() => Disconnect());
                     }
                 }
                 else
@@ -216,8 +216,6 @@ namespace ChatterClient
                     pingLastSent = DateTime.Now;
                     pingSent = pingLastSent;
                     pinged = false;
-
-                    Console.WriteLine("Ping recieved");
                 }
 
                 return true;
